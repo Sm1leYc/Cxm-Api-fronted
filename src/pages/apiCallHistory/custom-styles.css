@@ -1,0 +1,35 @@
+/* custom-styles.css */
+
+/* 修改Tabs内容区域的背景颜色 */
+.ant-tabs-content-holder {
+  background-color: #f5f5f5 !important; /* 你想要的背景颜色 */
+  padding: 16px !important; /* 内边距，可以根据需要调整 */
+}
+
+/* 修改TabPane中<pre>标签的背景颜色 */
+.custom-pre {
+  background-color: #f0f0f0 !important; /* 你想要的背景颜色 */
+  padding: 16px !important; /* 内边距，可以根据需要调整 */
+  border-radius: 4px !important; /* 圆角，可以根据需要调整 */
+}
+
+.descriptions {
+  background-color: #fafafa;
+}
+
+.pre {
+  background-color: #f6f8fa;
+  padding: 16px;
+  border-radius: 4px;
+  overflow: auto;
+}
+
+.jsonContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: #2d2d2d;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+

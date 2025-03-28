@@ -1,0 +1,11 @@
+.title-with-line {
+  display: flex;
+  align-items: center;
+}
+
+.title-line {
+  width: 5px;
+  height: 100%;
+  background-color: #007bff; /* 设置你想要的颜色 */
+  margin-right: 10px; /* 可根据需要调整竖线与标题的间距 */
+}
