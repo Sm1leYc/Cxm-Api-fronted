@@ -634,7 +634,6 @@ declare namespace API {
     userPassword?: string;
     userName?: string;
     userAvatar?: string;
-    email?: string;
     userRole?: string;
     loginFailCount?: number;
     accessKey?: string;
@@ -707,7 +706,6 @@ declare namespace API {
     userRole?: string;
     accessKey?: string;
     secretKey?: string;
-    email?: string;
     points?: number;
     status?: number;
     loggingEnabled?: number;

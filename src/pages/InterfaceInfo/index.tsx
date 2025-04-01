@@ -1,4 +1,5 @@
 import {
+  generateCurlCommand,
   getInterfaceInfoById,
   invokeInterfaceInfo
 } from "@/services/yuanapi-bdckend/interfaceInfoController";
@@ -19,15 +20,19 @@ import {
   message,
   Space,
   Table,
-  Tag, Tooltip,
-  Typography, Switch
-} from "antd";
+  Tag,
+  Tooltip,
+  Typography,
+  Switch,
+  Modal,
+} from 'antd';
 import { InterfaceRequestMethodEnum } from "@/enum/commonEnum";
 import { errorCode } from "@/enum/ErrorCodeEnum";
 import ProCard from "@ant-design/pro-card";
 import { Button ,Empty} from 'antd';
 import { ColumnsType } from "antd/es/table";
 import {
+  CopyOutlined,
   CrownOutlined,
   FireOutlined,
   InfoCircleOutlined, LinkOutlined,
@@ -119,6 +124,9 @@ const Index: React.FC = () => {
   const {initialState} = useModel('@@initialState');
   const {loginUser} = initialState || {}
 
+  const [curlCommand, setCurlCommand] = useState('');
+  const [showCurlModal, setShowCurlModal] = useState(false);
+
   const titleStyle = {
     fontSize: '20px',
     fontWeight: 'bold',
@@ -173,6 +181,49 @@ const Index: React.FC = () => {
   useEffect( () => {
     loadData();
   }, [])
+
+  // 生成cURL命令的函数
+  const handleGenerateCurl = async () => {
+    if (!params.id || !data) return;
+
+    try {
+      const formValues = form.getFieldsValue();
+      const userRequestParams = {};
+
+      if (formValues.userRequestParams) {
+        requestExample?.forEach((item, index) => {
+          const value = formValues.userRequestParams[index]?.value;
+          if (value !== undefined && value !== null && value.trim() !== '') {
+            userRequestParams[item.name] = value.trim();
+          }
+        });
+      }
+
+      const res = await generateCurlCommand({
+        id: params.id,
+        method: data.method,
+        host: data.host,
+        url: data.url,
+        userRequestParams,
+      });
+
+      if (res.data) {
+        setCurlCommand(res.data);
+        setShowCurlModal(true);
+      } else {
+        message.error('生成cURL命令失败');
+      }
+    } catch (error) {
+      message.error('生成cURL命令出错');
+      console.error(error);
+    }
+  };
+
+// 复制cURL命令
+  const handleCopyCurl = () => {
+    navigator.clipboard.writeText(curlCommand);
+    message.success('cURL命令已复制到剪贴板');
+  };
 
 
   const onFinish = async (values: any) => {
@@ -524,21 +575,90 @@ const Index: React.FC = () => {
                 </Form.List>
               </>
 
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={invokeLoading}
-                  disabled={invokeLoading}
-                  style={{
-                    height: '40px',
-                    borderRadius: '6px',
-                    fontWeight: 500
-                  }}
+              <>
+                <Modal
+                  title="cURL命令"
+                  open={showCurlModal}
+                  onCancel={() => setShowCurlModal(false)}
+                  footer={[
+                    <Button key="regenerate" type="primary" onClick={handleGenerateCurl}>
+                      重新生成
+                    </Button>,
+                    <Button key="close" onClick={() => setShowCurlModal(false)}>
+                      关闭
+                    </Button>,
+                  ]}
+                  width={800}
+                  bodyStyle={{ paddingTop: 12 }}
                 >
-                  发送请求
-                </Button>
-              </Form.Item>
+                  <Alert
+                    message="使用说明"
+                    description={
+                      <div style={{ lineHeight: '24px' }}>
+                        <p><strong>1. 命令说明：</strong>此命令已包含鉴权所需的全部头信息，可直接在终端或者导入Postman临时调用</p>
+                        <p><strong>2. X-Nonce：</strong>随机字符串，5分钟内防重放</p>
+                        <p><strong>3. X-Timestamp：</strong>时间戳（服务端会校验±5分钟时效）</p>
+                        <p><strong>4. X-Sign：</strong>签名值，根据SDK加密规则生成</p>
+                      </div>
+                    }
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                  />
+
+                  {/* cURL命令高亮显示 */}
+                  <div style={{ position: 'relative', border: '1px solid #f0f0f0', borderRadius: 4 }}>
+                    <Button
+                      icon={<CopyOutlined />}
+                      onClick={handleCopyCurl}
+                      size="small"
+                      style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
+                    />
+                    <SyntaxHighlighter
+                      language="bash"
+                      style={{
+                        maxHeight: '400px',
+                        overflow: 'auto',
+                        marginBottom: 0,
+                        borderRadius: 4,
+                        background: '#f6f8fa'
+                      }}
+                    >
+                      {curlCommand}
+                    </SyntaxHighlighter>
+                  </div>
+                </Modal>
+
+                <Form.Item>
+                  <Space>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={invokeLoading}
+                      disabled={invokeLoading}
+                      style={{
+                        height: '40px',
+                        borderRadius: '6px',
+                        fontWeight: 500
+                      }}
+                    >
+                      发送请求
+                    </Button>
+                    <Button
+                      onClick={handleGenerateCurl}
+                      style={{
+                        height: '40px',
+                        borderRadius: '6px',
+                        fontWeight: 500
+                      }}
+                    >
+                      生成cURL命令
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </>
+
+
             </Card>
 
 
