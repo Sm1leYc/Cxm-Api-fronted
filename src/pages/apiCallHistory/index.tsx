@@ -22,7 +22,12 @@ import {
 } from '@ant-design/pro-components';
 import moment from 'moment';
 import React, { useRef, useState, useEffect } from 'react';
-import { listApiCallHistory, updateLoggingStatus, deleteApiCallHistory } from "@/services/yuanapi-bdckend/apiCallHistoryController";
+import {
+  listApiCallHistory,
+  updateLoggingStatus,
+  deleteApiCallHistory,
+  getApiCallHistoryById
+} from "@/services/yuanapi-bdckend/apiCallHistoryController";
 import { useModel } from "@@/exports";
 import { getUserVoById } from "@/services/yuanapi-bdckend/userController";
 import ReactJson from "react-json-view";
@@ -45,6 +50,7 @@ const TableList: React.FC = () => {
   const [logEnabled, setLogEnabled] = useState(true);
   const { TabPane } = Tabs;
   const { Text } = Typography;
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     success: 0,
@@ -70,9 +76,23 @@ const TableList: React.FC = () => {
     }
   };
 
-  const handleRowClick = (record : any) => {
-    setSelectedRecord(record);
-    setDrawerVisible(true);
+  const handleRowClick = async (record: any) => {
+    setLoading(true);
+    try {
+      // 调用详情接口获取最新数据
+      const res = await getApiCallHistoryById({ id: record.id });
+      if (res.data) {
+        setSelectedRecord(res.data);
+        setDrawerVisible(true);
+      } else {
+        message.error('获取API调用历史失败');
+      }
+    } catch (error) {
+      message.error('获取API调用历史失败');
+      // console.error('Error fetching detail:', error);
+    }finally {
+      setLoading(false);
+    }
   };
 
   const getUserInfo = async (id: any) => {
@@ -98,15 +118,16 @@ const TableList: React.FC = () => {
       });
 
       if (res?.data?.records) {
-        const records = res.data.records;
-        const successCount = records.filter(r => r.status === '1').length;
-        const totalDuration = records.reduce((sum, record) => sum + (Number(record.duration) || 0), 0);;
+        const data = res.data;
+        const successCount = data.records?.filter(r => r.status === '1').length;
+        const totalDuration = data.records?.reduce((sum, record) => sum + (Number(record.duration) || 0), 0);;
+        const total = Number(data.total);
 
         setStats({
-          total: records.length,
-          success: successCount,
-          failed: records.length - successCount,
-          avgDuration: records.length ? Math.round(totalDuration / records.length) : 0
+          total: total,
+          success: successCount ? successCount : 0,
+          failed: successCount ? total - successCount : 0,
+          avgDuration: (total && totalDuration )? Math.round(totalDuration / total) : 0
         });
       }
     } catch (error) {
@@ -158,6 +179,13 @@ const TableList: React.FC = () => {
       title: 'id',
       dataIndex: 'id',
       key: 'id',
+      hideInTable: true,
+      hideInSearch: true
+    },
+    {
+      title: 'traceId',
+      dataIndex: 'traceId',
+      key: 'traceId',
       hideInTable: true,
       hideInSearch: true
     },
@@ -368,6 +396,7 @@ const TableList: React.FC = () => {
       </Card>
 
       <Drawer
+        loading={loading}
         title="API调用详情"
         width={window.innerWidth * 0.8}
         onClose={() => setDrawerVisible(false)}
@@ -383,7 +412,7 @@ const TableList: React.FC = () => {
                   基础详情
                 </Typography.Title>
                 <Tag color="blue" style={{ fontSize: '14px' }}>
-                  ID:{selectedRecord.id}
+                  traceId:{selectedRecord.traceId}
                 </Tag>
               </div>
             } bordered>

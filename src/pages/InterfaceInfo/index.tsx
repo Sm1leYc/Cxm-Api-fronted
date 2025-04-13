@@ -186,6 +186,10 @@ const Index: React.FC = () => {
   const handleGenerateCurl = async () => {
     if (!params.id || !data) return;
 
+    if (!loginUser) {
+      navigate('/user/login');
+    }
+
     try {
       const formValues = form.getFieldsValue();
       const userRequestParams = {};

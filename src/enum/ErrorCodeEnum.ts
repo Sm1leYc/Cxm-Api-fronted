@@ -32,57 +32,61 @@ export const errorCode = [
 
   {
     code: 403,
-    name: 'ERROR_FORBIDDEN',
+    name: 'FORBIDDEN_ERROR',
     des: '禁止访问',
   },
 
   {
+    code: 429,
+    name: 'TOO_MANY_REQUEST',
+    des: '请求过于频繁',
+  },
+
+  {
     code: 500,
-    name: 'ERROR_INTERNAL_SERVER',
-    des: '服务器内部错误',
+    name: 'INTERNAL_SERVER_ERROR',
+    des: '系统内部异常',
   },
   {
     code: 502,
-    name: 'ERROR_BAD_GATEWAY',
+    name: 'BAD_GATEWAY_ERROR',
     des: '网关错误或代理错误',
-  },
-  {
-    code: 503,
-    name: 'ERROR_SERVICE_UNAVAILABLE',
-    des: '接口服务不可用',
   },
 
   {
     code: 1001,
-    name: 'ERROR_INVALID_API_KEY',
+    name: 'INVALID_API_KEY',
     des: 'API密钥无效',
   },
 
   {
-    code: 2002,
-    name: 'ERROR_INVALID_PARAMETER',
+    code: 1003,
+    name: 'SIGNATURE_ERROR',
+    des: '签名认证失败',
+  },
+
+  {
+    code: 1004,
+    name: 'SERVICE_UNAVAILABLE',
+    des: '接口服务不可用',
+  },
+
+  {
+    code: 2001,
+    name: 'INVALID_PARAMETER',
     des: '参数无效（包括值无效和类型错误）',
   },
 
   {
-    code: 3001,
-    name: 'ERROR_NETWORK',
-    des: '网络错误或请求超时',
-  },
-  {
-    code: 3002,
-    name: 'ERROR_RATE_LIMIT',
-    des: '超过速率限制',
-  },
-  {
-    code: 3003,
-    name: 'UPLOAD_ERROR',
-    des: '上传文件异常',
-  },
-  {
     code: 3004,
     name: 'DEDUCE_POINT_ERROR',
-    des: '扣除积分发生异常',
+    des: '扣除积分失败',
+  },
+
+  {
+    code: 4001,
+    name: 'SDK_INVOKE_ERROR',
+    des: 'SDK调用失败',
   },
 ];
 

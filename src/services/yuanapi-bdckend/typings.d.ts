@@ -1,6 +1,7 @@
 declare namespace API {
   type ApiCallHistory = {
-    id?: string;
+    id?: number;
+    traceId?: string;
     timestamp?: string;
     httpMethod?: string;
     requestPath?: string;
@@ -16,6 +17,7 @@ declare namespace API {
     interfaceId?: number;
     duration?: number;
     status?: string;
+    isDelete?: number;
   };
 
   type ApiCallHistoryQuery = {
@@ -151,14 +153,6 @@ declare namespace API {
   type BaseResponseLong = {
     code?: number;
     data?: number;
-    message?: string;
-    costTime?: number;
-    size?: number;
-  };
-
-  type BaseResponseObject = {
-    code?: number;
-    data?: Record<string, any>;
     message?: string;
     costTime?: number;
     size?: number;
@@ -443,7 +437,6 @@ declare namespace API {
     status?: number;
     documentationUrl?: string;
     method?: string;
-    totalNum?: number;
     exampleCode?: string;
     type?: string;
     webserviceUrl?: string;
