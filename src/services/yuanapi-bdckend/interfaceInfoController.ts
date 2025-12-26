@@ -25,6 +25,14 @@ export async function getApiCallCount(options?: { [key: string]: any }) {
   });
 }
 
+/** 此处后端没有提供注释 GET /interfaceInfo/applyTempSecret */
+export async function applyTempSecret(options?: { [key: string]: any }) {
+  return request<API.BaseResponseString>('/interfaceInfo/applyTempSecret', {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
 /** 此处后端没有提供注释 POST /interfaceInfo/delete */
 export async function deleteInterfaceInfo(
   body: API.DeleteRequest,
@@ -45,7 +53,7 @@ export async function generateCurlCommand(
   body: API.InterfaceInfoInvokeRequest,
   options?: { [key: string]: any },
 ) {
-  return request<API.BaseResponseString>('/interfaceInfo/generateCurl', {
+  return request<API.BaseResponseCurlVO>('/interfaceInfo/generateCurl', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

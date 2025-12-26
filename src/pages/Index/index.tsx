@@ -19,18 +19,15 @@ import {
   FireOutlined,
   ApiOutlined,
   ClockCircleOutlined,
-  SearchOutlined
+  SearchOutlined,
+  RocketOutlined
 } from '@ant-design/icons';
 import { listInterfaceInfoByPage } from '@/services/yuanapi-bdckend/interfaceInfoController';
 import './Index.css';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 const { Search } = Input;
 
-/**
- * 接口展示主页
- * @constructor
- */
 const Index: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [list, setList] = useState<API.InterfaceInfo[]>([]);
@@ -84,18 +81,32 @@ const Index: React.FC = () => {
 
   return (
     <PageContainer
-      title="免费接口"
+      title={
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <RocketOutlined style={{ color: '#1890ff', fontSize: 24, marginRight: 12 }} />
+          <span style={{ fontSize: 22, fontWeight: 600 }}>免费接口</span>
+        </div>
+      }
+      style={{ background: 'linear-gradient(to bottom, #f0f5ff 0%, #ffffff 100px)' }}
     >
-      <Row justify="center" style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={20} md={16} lg={12} xl={10}>
+      <Row justify="center" style={{ marginBottom: 40 }}>
+        <Col xs={24} sm={22} md={20} lg={18} xl={16}>
           <Search
             allowClear
-            placeholder="搜索接口名称"
-            enterButton={<><SearchOutlined />搜索</>}
+            placeholder="输入接口名称、功能描述或关键词..."
+            enterButton={
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <SearchOutlined style={{ marginRight: 6 }} /> 搜索接口
+              </div>
+            }
             size="large"
             maxLength={30}
             onSearch={onSearch}
-            style={{ width: '100%' }}
+            style={{
+              width: '100%',
+              boxShadow: '0 4px 12px rgba(24, 144, 255, 0.2)',
+              borderRadius: 50
+            }}
           />
         </Col>
       </Row>
@@ -103,28 +114,40 @@ const Index: React.FC = () => {
       <Card
         bordered={false}
         style={{
-          borderRadius: '8px',
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-          backgroundColor: '#f8f9fa'
+          borderRadius: 16,
+          boxShadow: '0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05)',
+          background: 'transparent',
+          overflow: 'hidden'
         }}
+        bodyStyle={{ padding: '24px 16px' }}
       >
-        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Col>
-            <Text strong>
-              共 {total} 个接口 {searchName && `"${searchName}" 的搜索结果`}
+            <Text strong style={{ fontSize: 16 }}>
+              共发现 <span style={{ color: '#1890ff', fontWeight: 600 }}>{total}</span> 个接口
+              {searchName && (
+                <span>
+                  ，"<Text style={{ color: '#ff4d4f' }}>{searchName}</Text>" 的搜索结果
+                </span>
+              )}
             </Text>
           </Col>
           <Col>
-            <Text type="secondary">
-              <ClockCircleOutlined style={{ marginRight: 4 }} />
+            <Tag icon={<ClockCircleOutlined />} color="geekblue">
               最后更新: {new Date().toLocaleDateString()}
-            </Text>
+            </Tag>
           </Col>
         </Row>
 
-        <Skeleton loading={loading} active paragraph={{ rows: 10 }}>
+        <Skeleton
+          loading={loading}
+          active
+          paragraph={{ rows: 8 }}
+          avatar={{ shape: 'square' }}
+          style={{ padding: 24 }}
+        >
           {list.length > 0 ? (
-            <Row gutter={[16, 16]}>
+            <Row gutter={[24, 24]}>
               {list.map((item) => {
                 const apiLink = `/interface/${item.id}`;
                 const status = getStatusBadge(item.status);
@@ -134,28 +157,29 @@ const Index: React.FC = () => {
                     <Card
                       hoverable
                       onClick={() => history.push(apiLink)}
+                      className="api-card"
                       style={{
                         height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderRadius: '8px',
-                        transition: 'all 0.3s',
+                        borderRadius: 12,
+                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                         overflow: 'hidden',
+                        border: '1px solid rgba(24, 144, 255, 0.1)',
+                        background: 'linear-gradient(145deg, #ffffff, #f8fbff)'
                       }}
                       bodyStyle={{
-                        padding: '16px',
-                        flex: 1,
+                        padding: 16,
+                        height: '100%',
                         display: 'flex',
-                        flexDirection: 'column',
+                        flexDirection: 'column'
                       }}
                     >
-                      <div style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
                         <Badge
                           color={status.color}
                           text={
-                            <Text strong style={{ fontSize: '16px' }}>
+                            <Title level={5} ellipsis style={{ margin: 0, fontSize: 16 }}>
                               {item.name}
-                            </Text>
+                            </Title>
                           }
                         />
                       </div>
@@ -163,43 +187,56 @@ const Index: React.FC = () => {
                       <Text
                         type="secondary"
                         style={{
-                          fontSize: '14px',
-                          marginBottom: '12px',
+                          fontSize: 14,
+                          marginBottom: 16,
                           flex: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
+                          minHeight: 44,
+                          lineHeight: '22px',
+                          color: '#595959'
                         }}
                       >
-                        {item.description || '暂无描述'}
+                        {item.description || '该接口暂无功能描述...'}
                       </Text>
 
-                      <Divider style={{ margin: '8px 0' }} />
+                      <Divider
+                        style={{
+                          margin: '12px 0',
+                          background: 'linear-gradient(to right, transparent, #1890ff, transparent)',
+                          height: 1,
+                          opacity: 0.3
+                        }}
+                      />
 
                       <div
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center',
+                          alignItems: 'center'
                         }}
                       >
                         <Badge
                           count={status.text}
                           style={{
                             backgroundColor: status.color,
-                            fontSize: '12px',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
                           }}
                         />
 
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <Tag color="blue" style={{ margin: 0 }}>
-                            <ApiOutlined /> RESTful
-                          </Tag>
-
+                        <div style={{ display: 'flex', gap: 8 }}>
                           <Tooltip title={`调用次数: ${item?.invokeCount || 0}`}>
-                            <Tag icon={<FireOutlined />} color="volcano" style={{ margin: 0 }}>
+                            <Tag
+                              icon={<FireOutlined />}
+                              style={{
+                                margin: 0,
+                                background: 'linear-gradient(45deg, #ff7c45, #ff4d4f)',
+                                color: '#fff',
+                                fontWeight: 500,
+                                border: 'none',
+                                borderRadius: 12
+                              }}
+                            >
                               {formatInvokeCount(item?.invokeCount || 0)}
                             </Tag>
                           </Tooltip>
@@ -212,13 +249,20 @@ const Index: React.FC = () => {
             </Row>
           ) : (
             <Empty
+              imageStyle={{ height: 200 }}
               description={
-                <span>
-                  {searchName ? `没有找到与 "${searchName}" 相关的接口` : '暂无接口数据'}
-                </span>
+                <Text style={{ fontSize: 16, color: '#595959' }}>
+                  {searchName
+                    ? `没有找到 "${searchName}" 相关的接口`
+                    : '暂无可用接口数据'}
+                </Text>
               }
-              style={{ padding: '40px 0' }}
-            />
+              style={{ padding: '60px 0' }}
+            >
+              <Tag color="blue" icon={<ApiOutlined />} style={{ marginTop: 16 }}>
+                尝试其他关键词搜索
+              </Tag>
+            </Empty>
           )}
         </Skeleton>
       </Card>

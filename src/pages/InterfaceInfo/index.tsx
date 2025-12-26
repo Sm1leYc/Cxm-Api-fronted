@@ -1,7 +1,8 @@
 import {
   generateCurlCommand,
   getInterfaceInfoById,
-  invokeInterfaceInfo
+  invokeInterfaceInfo,
+  applyTempSecret
 } from "@/services/yuanapi-bdckend/interfaceInfoController";
 
 import { useParams} from "@@/exports";
@@ -32,16 +33,18 @@ import ProCard from "@ant-design/pro-card";
 import { Button ,Empty} from 'antd';
 import { ColumnsType } from "antd/es/table";
 import {
+  CheckCircleOutlined,
   CopyOutlined,
   CrownOutlined,
   FireOutlined,
-  InfoCircleOutlined, LinkOutlined,
+  InfoCircleOutlined, KeyOutlined, LinkOutlined,
 } from '@ant-design/icons';
 
 import { Column } from "rc-table";
 import React,{ useEffect,useState } from "react";
 import ReactJson from 'react-json-view';
 import ReactMarkdown from 'react-markdown';
+import { Tabs } from 'antd';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -127,6 +130,10 @@ const Index: React.FC = () => {
   const [curlCommand, setCurlCommand] = useState('');
   const [showCurlModal, setShowCurlModal] = useState(false);
 
+  const [tempSecret, setTempSecret] = useState(''); // 新增：临时密钥状态
+  const [useTempSecret, setUseTempSecret] = useState(false); // 新增：是否使用临时密钥
+  const [secretLoading, setSecretLoading] = useState(false); // 新增：密钥申请加载状态
+
   const titleStyle = {
     fontSize: '20px',
     fontWeight: 'bold',
@@ -209,6 +216,7 @@ const Index: React.FC = () => {
         host: data.host,
         url: data.url,
         userRequestParams,
+        tempSecret,
       });
 
       if (res.data) {
@@ -229,6 +237,26 @@ const Index: React.FC = () => {
     message.success('cURL命令已复制到剪贴板');
   };
 
+  const applyForTempSecret = async () => {
+    if (!params.id) return;
+
+    try {
+      const res = await applyTempSecret({
+        interfaceId: params.id
+      });
+
+      if (res.code === 0 && res.data) {
+        setTempSecret(res.data);
+        message.success('临时密钥申请成功');
+      } else {
+        message.error('临时密钥申请失败: ' + res.message);
+      }
+    } catch (error) {
+      message.error('申请临时密钥出错');
+      console.error(error);
+    }
+  };
+
 
   const onFinish = async (values: any) => {
     if (!params.id){
@@ -238,6 +266,11 @@ const Index: React.FC = () => {
 
     if (!loginUser) {
       navigate('/user/login');
+    }
+
+    if (!tempSecret) {
+      message.warning('请先获取临时密钥');
+      return;
     }
 
     setInvokeLoading(true);
@@ -266,10 +299,12 @@ const Index: React.FC = () => {
         host: data?.host,
         url:  data?.url,
         name: data?.name,
+        requestPoint: data?.requiredPoints,
         autoRetry,
         connectTimeout,
         readTimeout,
         userRequestParams,
+        tempSecret
       })
 
       setInvokeRes(res.data);
@@ -462,6 +497,36 @@ const Index: React.FC = () => {
           >
 
             <Card title={"请求参数"} style={{ marginBottom: 16 }}>
+              <Row gutter={16} style={{ marginBottom: 16 }}>
+                <Col span={24}>
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={applyForTempSecret}
+                      loading={secretLoading}
+                      icon={<KeyOutlined />}
+                    >
+                      {tempSecret ? '重新申请临时密钥' : '申请临时密钥'}
+                    </Button>
+                    {tempSecret && (
+                      <Tooltip title={tempSecret}>
+                        <Tag color="green" icon={<CheckCircleOutlined />}>
+                          已获取临时密钥
+                        </Tag>
+                      </Tooltip>
+                    )}
+                  </Space>
+                  {!tempSecret && (
+                    <Alert
+                      message="需要临时密钥才能调用接口"
+                      type="warning"
+                      showIcon
+                      style={{ marginTop: 8 }}
+                    />
+                  )}
+                </Col>
+              </Row>
+
               <>
                 <Row gutter={16}>
                   <Col xs={24} sm={16} md={12} lg={10}>
@@ -595,42 +660,88 @@ const Index: React.FC = () => {
                   width={800}
                   bodyStyle={{ paddingTop: 12 }}
                 >
-                  <Alert
-                    message="使用说明"
-                    description={
-                      <div style={{ lineHeight: '24px' }}>
-                        <p><strong>1. 命令说明：</strong>此命令已包含鉴权所需的全部头信息，可直接在终端或者导入Postman临时调用</p>
-                        <p><strong>2. X-Nonce：</strong>随机字符串，5分钟内防重放</p>
-                        <p><strong>3. X-Timestamp：</strong>时间戳（服务端会校验±5分钟时效）</p>
-                        <p><strong>4. X-Sign：</strong>签名值，根据SDK加密规则生成</p>
+                  <Tabs defaultActiveKey="1">
+                    <Tabs.TabPane tab="SDK cURL" key="1">
+                      <Alert
+                        message="SDK调用方式说明"
+                        description={
+                          <div style={{ lineHeight: '24px' }}>
+                            <p><strong>1. 命令说明：</strong>此命令使用SDK签名方式，适合长期集成使用</p>
+                            <p><strong>2. 安全机制：</strong>通过AccessKey和SecretKey生成签名</p>
+                            <p><strong>3. X-Nonce：</strong>随机字符串，5分钟内防重放</p>
+                            <p><strong>4. X-Timestamp：</strong>时间戳（服务端会校验±5分钟时效）</p>
+                            <p><strong>5. X-Sign：</strong>基于请求参数和SecretKey生成的签名值</p>
+                          </div>
+                        }
+                        type="info"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                      <div style={{ position: 'relative', border: '1px solid #f0f0f0', borderRadius: 4 }}>
+                        <Button
+                          icon={<CopyOutlined />}
+                          onClick={() => {
+                            navigator.clipboard.writeText(curlCommand.sdkCurl);
+                            message.success('SDK cURL命令已复制到剪贴板');
+                          }}
+                          size="small"
+                          style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
+                        />
+                        <SyntaxHighlighter
+                          language="bash"
+                          style={{
+                            maxHeight: '400px',
+                            overflow: 'auto',
+                            marginBottom: 0,
+                            borderRadius: 4,
+                            background: '#f6f8fa'
+                          }}
+                        >
+                          {curlCommand.sdkCurl}
+                        </SyntaxHighlighter>
                       </div>
-                    }
-                    type="info"
-                    showIcon
-                    style={{ marginBottom: 16 }}
-                  />
+                    </Tabs.TabPane>
 
-                  {/* cURL命令高亮显示 */}
-                  <div style={{ position: 'relative', border: '1px solid #f0f0f0', borderRadius: 4 }}>
-                    <Button
-                      icon={<CopyOutlined />}
-                      onClick={handleCopyCurl}
-                      size="small"
-                      style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
-                    />
-                    <SyntaxHighlighter
-                      language="bash"
-                      style={{
-                        maxHeight: '400px',
-                        overflow: 'auto',
-                        marginBottom: 0,
-                        borderRadius: 4,
-                        background: '#f6f8fa'
-                      }}
-                    >
-                      {curlCommand}
-                    </SyntaxHighlighter>
-                  </div>
+                    <Tabs.TabPane tab="临时密钥 cURL" key="2">
+                      <Alert
+                        message="临时密钥调用方式说明"
+                        description={
+                          <div style={{ lineHeight: '24px' }}>
+                            <p><strong>1. 命令说明：</strong>此命令使用临时密钥方式，适合短期测试使用</p>
+                            <p><strong>2. 安全机制：</strong>通过临时密钥(TempSecret)进行鉴权</p>
+                            <p><strong>3. 有效期：</strong>临时密钥有效期为2小时</p>
+                            <p><strong>4. 注意事项：</strong>过期后需要重新申请临时密钥</p>
+                          </div>
+                        }
+                        type="warning"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                      <div style={{ position: 'relative', border: '1px solid #f0f0f0', borderRadius: 4 }}>
+                        <Button
+                          icon={<CopyOutlined />}
+                          onClick={() => {
+                            navigator.clipboard.writeText(curlCommand.tempSecretCurl);
+                            message.success('临时密钥 cURL命令已复制到剪贴板');
+                          }}
+                          size="small"
+                          style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
+                        />
+                        <SyntaxHighlighter
+                          language="bash"
+                          style={{
+                            maxHeight: '400px',
+                            overflow: 'auto',
+                            marginBottom: 0,
+                            borderRadius: 4,
+                            background: '#f6f8fa'
+                          }}
+                        >
+                          {curlCommand.tempSecretCurl}
+                        </SyntaxHighlighter>
+                      </div>
+                    </Tabs.TabPane>
+                  </Tabs>
                 </Modal>
 
                 <Form.Item>
@@ -673,61 +784,155 @@ const Index: React.FC = () => {
           <Card
             title={
               <div className="custom-card-title">
-                <Text strong style={{ fontSize: '16px' }}>
+                <Text strong style={{ fontSize: '18px', color: '#1f1f1f' }}>
                   返回结果
                 </Text>
                 <Space
                   direction={isMobile ? 'vertical' : 'horizontal'}
                   size={isMobile ? 'small' : 'middle'}
-                  style={{ marginTop: '8px' }}
+                  style={{ marginTop: isMobile ? '8px' : '0' }}
                 >
-                  <Tag color="green" icon={<ClockCircleOutlined />}>
-                    耗时：{costTime}ms
+                  <Tag
+                    color="geekblue"
+                    icon={<ClockCircleOutlined />}
+                    style={{
+                      borderRadius: '12px',
+                      padding: '0 10px',
+                      fontWeight: 500
+                    }}
+                  >
+                    耗时: {costTime}ms
                   </Tag>
-                  <Tag color="blue" icon={<FileTextOutlined />}>
-                    大小：{size} KB
+                  <Tag
+                    color="cyan"
+                    icon={<FileTextOutlined />}
+                    style={{
+                      borderRadius: '12px',
+                      padding: '0 10px',
+                      fontWeight: 500
+                    }}
+                  >
+                    大小: {size} KB
                   </Tag>
                 </Space>
               </div>
             }
             loading={invokeLoading}
+            extra={
+              invokeRes && (
+                <Button
+                  icon={<CopyOutlined />}
+                  size="small"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      isJson ? JSON.stringify(jsonData, null, 2) : invokeRes
+                    );
+                    message.success('已复制到剪贴板');
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    borderRadius: '4px',
+                    backgroundColor: '#f0f7ff',
+                    borderColor: '#91caff'
+                  }}
+                >
+                  复制结果
+                </Button>
+              )
+            }
+            style={{
+              borderRadius: '8px',
+              border: '1px solid #e8e8e8',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+              position: 'relative'
+            }}
+            headStyle={{
+              backgroundColor: '#f9f9f9',
+              borderBottom: '1px solid #f0f0f0',
+              borderRadius: '8px 8px 0 0'
+            }}
+            bodyStyle={{
+              padding: invokeRes ? '0' : '20px',
+              backgroundColor: '#fafafa',
+              minHeight: '200px',
+              borderRadius: '0 0 8px 8px'
+            }}
           >
-
-            <Paragraph>
-              {invokeRes ? (
-                isJson ? (
+            {invokeRes ? (
+              <div style={{
+                padding: '16px',
+                maxHeight: '500px',
+                overflow: 'auto'
+              }}>
+                {isJson ? (
                   <ReactJson
                     src={jsonData}
                     name={false}
                     displayDataTypes={false}
+                    iconStyle="circle"
+                    theme="summerfruit:inverted"
                     style={{
-                      backgroundColor: '#f6f8fa',
-                      padding: '16px',
-                      borderRadius: '8px',
+                      backgroundColor: 'transparent',
+                      padding: '12px',
+                      borderRadius: '6px',
                     }}
-                    enableClipboard={true}
+                    enableClipboard={false}
+                    collapseStringsAfterLength={80}
+                    displayObjectSize={false}
+                    indentWidth={2}
                   />
                 ) : (
                   <div
                     style={{
-                      backgroundColor: '#f6f8fa',
+                      backgroundColor: '#fefefe',
                       padding: '16px',
-                      borderRadius: '8px',
-                      wordBreak: 'break-word', // 保证长字符串不会溢出
-                      whiteSpace: 'pre-wrap', // 保持换行格式
+                      borderRadius: '6px',
+                      border: '1px solid #f0f0f0',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace",
+                      fontSize: '14px',
+                      lineHeight: 1.6,
+                      color: '#24292e'
                     }}
                   >
-                    <ReactMarkdown>{invokeRes}</ReactMarkdown>
+                    <ReactMarkdown>
+                      {invokeRes}
+                    </ReactMarkdown>
                   </div>
-                )
-              ) : (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                  <Empty description="未发起调用，暂无请求信息" />
-                </div>
-              )}
-            </Paragraph>
-
+                )}
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '200px'
+              }}>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <Text type="secondary" style={{ fontSize: '15px' }}>
+                      未发起调用，暂无请求信息
+                    </Text>
+                  }
+                />
+                <Button
+                  type="primary"
+                  ghost
+                  onClick={() => form.submit()}
+                  style={{ marginTop: '16px' }}
+                >
+                  立即测试
+                </Button>
+              </div>
+            )}
           </Card>
+
+
         </ProCard.TabPane>
 
         <ProCard.TabPane key="doc" tab="接口文档">

@@ -47,6 +47,23 @@ export async function listApiCallHistory(
   });
 }
 
+/** 此处后端没有提供注释 GET /apiCallHistory/recent-months */
+export async function getRecentMonthsStats(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getRecentMonthsStatsParams,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponseMapStringListDailyStatsDto>('/apiCallHistory/recent-months', {
+    method: 'GET',
+    params: {
+      // months has a default value: 3
+      months: '3',
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 /** 此处后端没有提供注释 POST /apiCallHistory/updateLoggingStatus */
 export async function updateLoggingStatus(
   body: API.LoggingStatusRequest,

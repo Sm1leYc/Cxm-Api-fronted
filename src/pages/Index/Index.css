@@ -24,3 +24,23 @@
   border-radius: 12px;
   margin-right: 8px;
 }
+
+
+.api-card {
+  transition: transform 0.3s, box-shadow 0.3s !important;
+  will-change: transform;
+}
+
+.api-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px -8px rgba(24, 144, 255, 0.25) !important;
+  border-color: rgba(24, 144, 255, 0.3) !important;
+}
+
+.ant-card.api-card .ant-card-body {
+  transition: background 0.3s;
+}
+
+.api-card:hover .ant-card-body {
+  background: linear-gradient(145deg, #f0f9ff, #ffffff);
+}

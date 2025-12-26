@@ -25,7 +25,7 @@ interface ResponseStructure {
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const requestConfig: RequestConfig = {
-  // baseURL:"https://gateway.ymcapi.xyz/backend",
+  // baseURL:"https://gateway.ymcapi.xyz/backend/",
   // baseURL:"http://localhost:8101/",
   baseURL:"http://localhost:8089/backend/",
   withCredentials: true,

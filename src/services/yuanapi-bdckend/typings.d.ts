@@ -17,6 +17,7 @@ declare namespace API {
     interfaceId?: number;
     duration?: number;
     status?: string;
+    requestPoint?: number;
     isDelete?: number;
   };
 
@@ -81,6 +82,14 @@ declare namespace API {
   type BaseResponseBoolean = {
     code?: number;
     data?: boolean;
+    message?: string;
+    costTime?: number;
+    size?: number;
+  };
+
+  type BaseResponseCurlVO = {
+    code?: number;
+    data?: CurlVO;
     message?: string;
     costTime?: number;
     size?: number;
@@ -158,6 +167,14 @@ declare namespace API {
     size?: number;
   };
 
+  type BaseResponseMapStringListDailyStatsDto = {
+    code?: number;
+    data?: Record<string, any>;
+    message?: string;
+    costTime?: number;
+    size?: number;
+  };
+
   type BaseResponsePageApiCallHistory = {
     code?: number;
     data?: PageApiCallHistory;
@@ -230,6 +247,17 @@ declare namespace API {
     size?: number;
   };
 
+  type CurlVO = {
+    sdkCurl?: string;
+    tempSecretCurl?: string;
+  };
+
+  type DailyStatsDto = {
+    date?: string;
+    callCount?: number;
+    pointCost?: number;
+  };
+
   type deleteApiCallHistoryParams = {
     id: string;
   };
@@ -270,7 +298,7 @@ declare namespace API {
   };
 
   type getApiCallHistoryByIdParams = {
-    id: string;
+    id: number;
   };
 
   type getBannedIpByIdParams = {
@@ -283,6 +311,10 @@ declare namespace API {
 
   type getInterfaceInfoByIdParams = {
     id: number;
+  };
+
+  type getRecentMonthsStatsParams = {
+    months?: number;
   };
 
   type getUserByIdParams = {
@@ -361,9 +393,11 @@ declare namespace API {
     host?: string;
     method?: string;
     name?: string;
+    requestPoint?: number;
     autoRetry?: boolean;
     connectTimeout?: number;
     readTimeout?: number;
+    tempSecret?: string;
   };
 
   type InterfaceInfoQueryRequest = {
@@ -510,11 +544,11 @@ declare namespace API {
     size?: number;
     current?: number;
     orders?: OrderItem[];
-    optimizeCountSql?: boolean;
-    searchCount?: boolean;
+    optimizeCountSql?: PageApiCallHistory;
+    searchCount?: PageApiCallHistory;
     optimizeJoinOfCountSql?: boolean;
-    countId?: string;
     maxLimit?: number;
+    countId?: string;
     pages?: number;
   };
 
@@ -524,11 +558,11 @@ declare namespace API {
     size?: number;
     current?: number;
     orders?: OrderItem[];
-    optimizeCountSql?: boolean;
-    searchCount?: boolean;
+    optimizeCountSql?: PageBannedIps;
+    searchCount?: PageBannedIps;
     optimizeJoinOfCountSql?: boolean;
-    countId?: string;
     maxLimit?: number;
+    countId?: string;
     pages?: number;
   };
 
@@ -538,11 +572,11 @@ declare namespace API {
     size?: number;
     current?: number;
     orders?: OrderItem[];
-    optimizeCountSql?: boolean;
-    searchCount?: boolean;
+    optimizeCountSql?: PageFeedback;
+    searchCount?: PageFeedback;
     optimizeJoinOfCountSql?: boolean;
-    countId?: string;
     maxLimit?: number;
+    countId?: string;
     pages?: number;
   };
 
@@ -552,11 +586,11 @@ declare namespace API {
     size?: number;
     current?: number;
     orders?: OrderItem[];
-    optimizeCountSql?: boolean;
-    searchCount?: boolean;
+    optimizeCountSql?: PageInterfaceInfoVO;
+    searchCount?: PageInterfaceInfoVO;
     optimizeJoinOfCountSql?: boolean;
-    countId?: string;
     maxLimit?: number;
+    countId?: string;
     pages?: number;
   };
 
@@ -566,11 +600,11 @@ declare namespace API {
     size?: number;
     current?: number;
     orders?: OrderItem[];
-    optimizeCountSql?: boolean;
-    searchCount?: boolean;
+    optimizeCountSql?: PageUser;
+    searchCount?: PageUser;
     optimizeJoinOfCountSql?: boolean;
-    countId?: string;
     maxLimit?: number;
+    countId?: string;
     pages?: number;
   };
 
@@ -580,11 +614,11 @@ declare namespace API {
     size?: number;
     current?: number;
     orders?: OrderItem[];
-    optimizeCountSql?: boolean;
-    searchCount?: boolean;
+    optimizeCountSql?: PageUserVO;
+    searchCount?: PageUserVO;
     optimizeJoinOfCountSql?: boolean;
-    countId?: string;
     maxLimit?: number;
+    countId?: string;
     pages?: number;
   };
 
@@ -628,7 +662,6 @@ declare namespace API {
     userName?: string;
     userAvatar?: string;
     userRole?: string;
-    loginFailCount?: number;
     accessKey?: string;
     secretKey?: string;
     createTime?: string;
